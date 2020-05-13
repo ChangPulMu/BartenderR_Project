@@ -1,0 +1,99 @@
+#include "Herkulex.cpp"
+#include <Wire.h>
+#include "Adafruit_MotorShield.h"
+#include "utility/Adafruit_PWMServoDriver.h"
+//#define RX 3 // HerkuleX TX Pin 연결 
+//#define TX 4 // HerkuleX RX Pin 연결
+#define MOTORID 253 // HerkuleX 서보모터 ID 지정
+
+int BTS_RX = 8;
+int BTS_TX = 9;
+SoftwareSerial BTSerial(BTS_TX,BTS_RX);
+
+Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
+
+Adafruit_DCMotor *pumpmotor = AFMS.getMotor(2);
+
+void setup() {
+  Serial.begin(57600);
+  Herkulex.begin(57600, 3, 4); // Baudrate를 57600으로 설정
+  delay(10);
+  Herkulex.torqueON(MOTORID); // 모터 전원ON
+  BTSerial.begin(9600);
+
+  AFMS.begin();  // create with the default frequency 1.6KHz
+  //AFMS.begin(1000);  // OR with a different frequency, say 1KHz
+  
+  // Set the speed to start, from 0 (off) to 255 (max speed)
+  // turn on motor
+  pumpmotor->setSpeed(255);
+  pumpmotor->run(FORWARD);
+  pumpmotor->run(RELEASE);
+}
+
+void loop() {
+  unsigned char incomingbyte = 0; //Bluetooth로부터 받은 신호를 저장하는 변수
+  if (Herkulex.stat(MOTORID) != H_STATUS_OK) //현재의 Herkulex 상태 체크 
+   Herkulex.clearError(MOTORID); // 에러가 감지되면 모터 초기화
+  if (BTSerial.available()) // Bluetooth와 통신이 가능하면
+   incomingbyte = BTSerial.read(); // Bluetooth로부터 받은 신호를 변수에 저장
+
+  if (incomingbyte == '1') // 음료’1’을 받으면
+  {
+  Serial.println("Move angle");
+  Herkulex.moveOneAngle(MOTORID, 0, 1, LED_RED); // Herkulex를 11.2ms 속도로 0도 회전하고, red LED on
+  delay(10000); // 10초 대기
+  }
+
+  if (incomingbyte == '2')
+  {
+  Serial.println("Move angle");
+  Herkulex.moveOneAngle(MOTORID, 60, 1, LED_RED); // Herkulex를 11.2ms 속도로 60도 회전하고, red LED on
+  delay(10000);  
+  }
+
+  if (incomingbyte == '3')
+  {
+  Serial.println("Move angle");
+  Herkulex.moveOneAngle(MOTORID, 120, 1, LED_RED); // Herkulex를 11.2ms 속도로 120도 회전하고, red LED on
+  delay(10000); 
+  }
+
+  if (incomingbyte == '4')
+  {
+  Serial.println("Move angle");
+  Herkulex.moveOneAngle(MOTORID, 180, 1, LED_RED); // Herkulex를 11.2ms 속도로 180도 회전하고, red LED on
+  delay(10000); 
+  }
+
+  if (incomingbyte == '5')
+  {
+  Serial.println("Move angle");
+  Herkulex.moveOneAngle(MOTORID, -60, 1, LED_RED); // Herkulex를 11.2ms 속도로 -60도 회전하고, red LED on
+  delay(10000); 
+  }
+
+  if (incomingbyte == '6')
+  {
+  Serial.println("Move angle");
+  Herkulex.moveOneAngle(MOTORID, -120, 1, LED_RED); // Herkulex를 11.2ms 속도로 -120도 회전하고, red LED on
+  delay(10000); 
+  }
+  pumpmotorrun();
+  Serial.println("Move angle");
+  Herkulex.moveOneAngle(MOTORID, 0, 1, LED_BLUE); // Herkulex를 11.2ms 속도로 0도로 회전하고(원래의 위치로 돌아감), blue LED on
+  if (!Serial.available()) // 블루투스로부터 받을 신호가 없으면
+   Herkulex.torqueOFF(MOTORID); // 모터 전원off
+//받을 신호가 남아있다면  loop문 반복
+}
+void pumpmotorrun()
+{
+    pumpmotor->run(FORWARD);
+    delay(1650);
+    pumpmotor->run(RELEASE);
+    delay(5000);
+    pumpmotor->run(FORWARD);
+    delay(1650);
+    pumpmotor->run(RELEASE);
+    delay(5000);
+}
